@@ -111,40 +111,59 @@ def analisar(chat):
     c = Counter(historico)
 
     quentes = c.most_common(3)
-    frios = [i for i in range(37) if i not in c]
+    frios = sorted([i for i in range(37) if i not in c])
 
-    par = len([n for n in historico if n != 0 and n % 2 == 0])
-    impar = len(historico) - par
+    pares = len([n for n in historico if n != 0 and n % 2 == 0])
+    impares = len(historico) - pares
 
-    red = len([n for n in historico if n in vermelhos])
-    black = len([n for n in historico if n in pretos])
+    verm = len([n for n in historico if n in vermelhos])
+    pret = len([n for n in historico if n in pretos])
 
     baixa = len([n for n in historico if 1 <= n <= 18])
     alta = len([n for n in historico if 19 <= n <= 36])
 
-    cols = {
-        "Col 1": len([n for n in historico if n in col1]),
-        "Col 2": len([n for n in historico if n in col2]),
-        "Col 3": len([n for n in historico if n in col3]),
+    colunas = {
+        "Coluna 1": len([n for n in historico if n in col1]),
+        "Coluna 2": len([n for n in historico if n in col2]),
+        "Coluna 3": len([n for n in historico if n in col3]),
     }
 
+    duzia1 = len([n for n in historico if 1 <= n <= 12])
+    duzia2 = len([n for n in historico if 13 <= n <= 24])
+    duzia3 = len([n for n in historico if 25 <= n <= 36])
+
     msg = (
-        "📊 **RELATÓRIO — 10 RODADAS**\n\n"
-        f"🎯 {historico}\n\n"
-        f"🔥 **Quentes:** {quentes}\n"
-        f"❄️ **Frios:** {frios[:10]}\n\n"
-        f"⚖️ Par {par} | Ímpar {impar}\n"
-        f"🎨 Vermelho {red} | Preto {black}\n"
-        f"⬇️ Baixa {baixa} | ⬆️ Alta {alta}\n\n"
-        f"📊 **Colunas:** {cols}\n\n"
-        "🧠 **Leitura:**\n"
-        "- Evite repetir topo direto\n"
-        "- Frio atrasado tende a corrigir\n"
-        "- Jogue com proteção\n\n"
-        "🛑 **Gestão:** Stop Win +20% | Stop Loss -30%"
+        "📊 **$Criptoplay$ — RELATÓRIO (10 RODADAS)**\n\n"
+        "🎯 **NÚMEROS:**\n"
+        f"{' · '.join(map(str, historico))}\n\n"
+        "━━━━━━━━━━━━━━\n"
+        "🔥 **ZONAS QUENTES**\n" +
+        "\n".join([f"{i+1}️⃣ {n} → {q}x" for i, (n, q) in enumerate(quentes)]) +
+        "\n\n❄️ **ZONAS FRIAS**\n"
+        f"{' · '.join(map(str, frios[:10]))}\n\n"
+        "━━━━━━━━━━━━━━\n"
+        "⚖️ **PAR / ÍMPAR**\n"
+        f"Par: {pares}\nÍmpar: {impares}\n\n"
+        "🎨 **COR**\n"
+        f"Vermelho: {verm}\nPreto: {pret}\n\n"
+        "━━━━━━━━━━━━━━\n"
+        "⬆️⬇️ **ALTURA**\n"
+        f"0–18: {baixa}\n19–36: {alta}\n\n"
+        "━━━━━━━━━━━━━━\n"
+        "📊 **COLUNAS**\n"
+        f"Coluna 1: {colunas['Coluna 1']}\n"
+        f"Coluna 2: {colunas['Coluna 2']}\n"
+        f"Coluna 3: {colunas['Coluna 3']}\n\n"
+        "━━━━━━━━━━━━━━\n"
+        "📦 **DÚZIAS**\n"
+        f"1ª: {duzia1}\n2ª: {duzia2}\n3ª: {duzia3}\n\n"
+        "━━━━━━━━━━━━━━\n"
+        "🧠 **LEITURA DO BOT**\n"
+        "• Analise o atraso antes de entrar\n"
+        "• Evite repetir topo direto\n\n"
+        "🛑 **Gestão:** Stop Win +20% | Stop Loss −30%"
     )
 
     bot.send_message(chat, msg, parse_mode="Markdown")
-
 print("🤖 $Criptoplay$ rodando 24h")
 bot.infinity_polling()
