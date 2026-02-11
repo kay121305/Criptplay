@@ -22,6 +22,9 @@ gale = 0
 green = 0
 loss = 0
 
+# Histórico de números para o resumo
+ultimos_numeros = []
+
 # ================= TECLADO =================
 def teclado():
     kb = InlineKeyboardMarkup(row_width=6)
@@ -40,6 +43,35 @@ def start(msg):
         parse_mode="Markdown"
     )
 
+# ================= FUNÇÃO DE RESUMO =================
+def resumo_15_rodadas(chat_id):
+    if len(ultimos_numeros) < 15:
+        return
+
+    # Pegando os últimos 15 números
+    ultimos_15 = ultimos_numeros[-15:]
+
+    preto = {2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35}
+    vermelho = {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36}
+
+    resumo = {
+        "Preto": sum(1 for n in ultimos_15 if n in preto),
+        "Vermelho": sum(1 for n in ultimos_15 if n in vermelho),
+        "Alto": sum(1 for n in ultimos_15 if 19 <= n <= 36),
+        "Baixo": sum(1 for n in ultimos_15 if 1 <= n <= 18),
+        "Par": sum(1 for n in ultimos_15 if n != 0 and n % 2 == 0),
+        "Ímpar": sum(1 for n in ultimos_15 if n % 2 != 0),
+    }
+
+    bot.send_message(
+        chat_id,
+        f"📊 **Resumo das últimas 15 rodadas**\n"
+        f"⬛ Preto: {resumo['Preto']}  🔴 Vermelho: {resumo['Vermelho']}\n"
+        f"⬆️ Alto: {resumo['Alto']}  ⬇️ Baixo: {resumo['Baixo']}\n"
+        f"➗ Par: {resumo['Par']}  ❌ Ímpar: {resumo['Ímpar']}",
+        parse_mode="Markdown"
+    )
+
 # ================= CLIQUE =================
 @bot.callback_query_handler(func=lambda call: True)
 def clique(call):
@@ -50,6 +82,9 @@ def clique(call):
         return
 
     n = int(call.data)
+
+    # Adiciona ao histórico
+    ultimos_numeros.append(n)
 
     # ========== SEM SINAL ==========
     if not sinal_ativo:
@@ -65,7 +100,7 @@ def clique(call):
         else:
             falha_010 += 1
 
-        # DISPARO DE SINAL
+        # ========== DISPARO DE SINAL ==========
         if falha_369 >= 10:
             sinal_ativo = True
             grupo_sinal = "3-6-9"
@@ -83,8 +118,9 @@ def clique(call):
                 f"🚨 **SINAL DE ENTRADA** 🚨\n"
                 f"❌ 10 rodadas sem sair\n"
                 f"🎯 Estratégia: **{grupo_sinal}**\n"
-                f"⏭️ Entrar na PRÓXIMA\n"
-                f"♻️ Até 3 gales",
+                f"⏭️ Entrar na PRÓXIMA rodada após o número: **{n}**\n"
+                f"♻️ Até 3 gales\n"
+                f"🎰 Roleta de aposta: **AutoRolet**",
                 parse_mode="Markdown"
             )
 
@@ -125,6 +161,10 @@ def clique(call):
                 f"🎯 Estratégia {grupo_sinal}",
                 parse_mode="Markdown"
             )
+
+    # ========== RESUMO A CADA 15 RODADAS ==========
+    if len(ultimos_numeros) % 15 == 0:
+        resumo_15_rodadas(call.message.chat.id)
 
     bot.edit_message_reply_markup(
         call.message.chat.id,
