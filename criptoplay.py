@@ -6,7 +6,7 @@ import os
 # CONFIGURAÇÃO
 # ============================================================
 
-TOKEN = os.getenv("8518534286:AAEO3EnnHTLYjX64ExClGqIqHqR0DEpU1So")
+TOKEN = os.getenv("TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
 GRUPO_ID = -1003629208122
