@@ -1,177 +1,154 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+import os
 
-# ================= CONFIG =================
-API_TOKEN = "8502821738:AAFMPDzVKl9B1KIPvp5dX9jhRBIScy_SQv0"
-bot = telebot.TeleBot(API_TOKEN)
+# ============================================================
+# CONFIGURAÇÃO
+# ============================================================
 
-ADMINS = {8431121309}
+TOKEN = os.getenv("TOKEN")
+bot = telebot.TeleBot(TOKEN)
 
-# ================= GRUPOS =================
-grupo_369 = {3,6,9,13,16,19,23,26,29,33,36}
-grupo_010 = {19,15,32,0,25,3,35,12,28}
+GRUPO_ID = -1003629208122
+ADMIN_ID = 8431121309
 
-# ================= CONTROLE =================
-falha_369 = 0
-falha_010 = 0
+# ============================================================
+# DEFINIÇÃO DE CORES OFICIAIS EUROPEIAS
+# ============================================================
 
-sinal_ativo = False
-grupo_sinal = ""
-gale = 0
+VERMELHOS = {
+    1,3,5,7,9,12,14,16,18,
+    19,21,23,25,27,30,32,34,36
+}
 
-green = 0
-loss = 0
+PRETOS = {
+    2,4,6,8,10,11,13,15,17,
+    20,22,24,26,28,29,31,33,35
+}
 
-# Histórico de números para o resumo
-ultimos_numeros = []
+VERDE = {0}
 
-# ================= TECLADO =================
-def teclado():
-    kb = InlineKeyboardMarkup(row_width=6)
-    kb.add(*[InlineKeyboardButton(str(i), callback_data=str(i)) for i in range(37)])
-    return kb
+# ============================================================
+# LAYOUT OFICIAL EUROPEU (FORMATO MESA)
+# ============================================================
 
-# ================= START =================
-@bot.message_handler(commands=['start'])
-def start(msg):
-    if msg.from_user.id not in ADMINS:
-        return
-    bot.send_message(
-        msg.chat.id,
-        "🎰 **Criptoplay — Painel**\nClique no número que saiu:",
-        reply_markup=teclado(),
-        parse_mode="Markdown"
-    )
+LINHA_ZERO = [0]
 
-# ================= FUNÇÃO DE RESUMO =================
-def resumo_15_rodadas(chat_id):
-    if len(ultimos_numeros) < 15:
-        return
+LINHA_1 = [3,6,9,12,15,18,21,24,27,30,33,36]
+LINHA_2 = [2,5,8,11,14,17,20,23,26,29,32,35]
+LINHA_3 = [1,4,7,10,13,16,19,22,25,28,31,34]
 
-    # Pegando os últimos 15 números
-    ultimos_15 = ultimos_numeros[-15:]
+# ============================================================
+# FUNÇÃO PARA IDENTIFICAR COR
+# ============================================================
 
-    preto = {2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35}
-    vermelho = {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36}
-
-    resumo = {
-        "Preto": sum(1 for n in ultimos_15 if n in preto),
-        "Vermelho": sum(1 for n in ultimos_15 if n in vermelho),
-        "Alto": sum(1 for n in ultimos_15 if 19 <= n <= 36),
-        "Baixo": sum(1 for n in ultimos_15 if 1 <= n <= 18),
-        "Par": sum(1 for n in ultimos_15 if n != 0 and n % 2 == 0),
-        "Ímpar": sum(1 for n in ultimos_15 if n % 2 != 0),
-    }
-
-    bot.send_message(
-        chat_id,
-        f"📊 **Resumo das últimas 15 rodadas**\n"
-        f"⬛ Preto: {resumo['Preto']}  🔴 Vermelho: {resumo['Vermelho']}\n"
-        f"⬆️ Alto: {resumo['Alto']}  ⬇️ Baixo: {resumo['Baixo']}\n"
-        f"➗ Par: {resumo['Par']}  ❌ Ímpar: {resumo['Ímpar']}",
-        parse_mode="Markdown"
-    )
-
-# ================= CLIQUE =================
-@bot.callback_query_handler(func=lambda call: True)
-def clique(call):
-    global falha_369, falha_010, sinal_ativo, grupo_sinal, gale, green, loss
-
-    if call.from_user.id not in ADMINS:
-        bot.answer_callback_query(call.id, "Apenas ADM")
-        return
-
-    n = int(call.data)
-
-    # Adiciona ao histórico
-    ultimos_numeros.append(n)
-
-    # ========== SEM SINAL ==========
-    if not sinal_ativo:
-        # grupo 3-6-9
-        if n in grupo_369:
-            falha_369 = 0
-        else:
-            falha_369 += 1
-
-        # grupo 0-10
-        if n in grupo_010:
-            falha_010 = 0
-        else:
-            falha_010 += 1
-
-        # ========== DISPARO DE SINAL ==========
-        if falha_369 >= 10:
-            sinal_ativo = True
-            grupo_sinal = "3-6-9"
-        elif falha_010 >= 10:
-            sinal_ativo = True
-            grupo_sinal = "0-10"
-
-        if sinal_ativo:
-            gale = 0
-            falha_369 = 0
-            falha_010 = 0
-
-            bot.send_message(
-                call.message.chat.id,
-                f"🚨 **SINAL DE ENTRADA** 🚨\n"
-                f"❌ 10 rodadas sem sair\n"
-                f"🎯 Estratégia: **{grupo_sinal}**\n"
-                f"⏭️ Entrar na PRÓXIMA rodada após o número: **{n}**\n"
-                f"♻️ Até 3 gales\n"
-                f"🎰 Roleta de aposta: **AutoRolet**",
-                parse_mode="Markdown"
-            )
-
-    # ========== COM SINAL ==========
+def obter_cor(numero):
+    if numero in VERMELHOS:
+        return "🔴"
+    elif numero in PRETOS:
+        return "⚫"
     else:
-        gale += 1
+        return "🟢"
 
-        grupo_atual = grupo_369 if grupo_sinal == "3-6-9" else grupo_010
+# ============================================================
+# CRIAR TECLADO PROFISSIONAL FORMATO MESA
+# ============================================================
 
-        if n in grupo_atual:
-            green += 1
-            bot.send_message(
-                call.message.chat.id,
-                f"🟢 **GREEN**\n"
-                f"🎯 Estratégia {grupo_sinal}\n"
-                f"📊 Placar: {green}x{loss}",
-                parse_mode="Markdown"
+def criar_teclado_roleta():
+    teclado = InlineKeyboardMarkup(row_width=12)
+
+    # Linha do ZERO
+    linha_zero_btn = []
+    for num in LINHA_ZERO:
+        linha_zero_btn.append(
+            InlineKeyboardButton(
+                f"{obter_cor(num)} {num}",
+                callback_data=str(num)
             )
-            sinal_ativo = False
-            gale = 0
+        )
+    teclado.row(*linha_zero_btn)
 
-        elif gale >= 3:
-            loss += 1
-            bot.send_message(
-                call.message.chat.id,
-                f"🔴 **LOSS**\n"
-                f"🎯 Estratégia {grupo_sinal}\n"
-                f"📊 Placar: {green}x{loss}",
-                parse_mode="Markdown"
+    # Linha Superior (3,6,9...)
+    linha1_btn = []
+    for num in LINHA_1:
+        linha1_btn.append(
+            InlineKeyboardButton(
+                f"{obter_cor(num)} {num}",
+                callback_data=str(num)
             )
-            sinal_ativo = False
-            gale = 0
+        )
+    teclado.row(*linha1_btn)
 
-        else:
-            bot.send_message(
-                call.message.chat.id,
-                f"⚠️ **GALE {gale}/3**\n"
-                f"🎯 Estratégia {grupo_sinal}",
-                parse_mode="Markdown"
+    # Linha do Meio (2,5,8...)
+    linha2_btn = []
+    for num in LINHA_2:
+        linha2_btn.append(
+            InlineKeyboardButton(
+                f"{obter_cor(num)} {num}",
+                callback_data=str(num)
             )
+        )
+    teclado.row(*linha2_btn)
 
-    # ========== RESUMO A CADA 15 RODADAS ==========
-    if len(ultimos_numeros) % 15 == 0:
-        resumo_15_rodadas(call.message.chat.id)
+    # Linha Inferior (1,4,7...)
+    linha3_btn = []
+    for num in LINHA_3:
+        linha3_btn.append(
+            InlineKeyboardButton(
+                f"{obter_cor(num)} {num}",
+                callback_data=str(num)
+            )
+        )
+    teclado.row(*linha3_btn)
 
-    bot.edit_message_reply_markup(
-        call.message.chat.id,
-        call.message.message_id,
-        reply_markup=teclado()
+    return teclado
+
+# ============================================================
+# PAINEL VISUAL
+# ============================================================
+
+def painel_texto():
+    return """
+🎰 PAINEL PROFISSIONAL – ROLETA EUROPEIA
+
+Formato oficial de mesa física
+Selecione o número conforme resultado real.
+"""
+
+# ============================================================
+# COMANDO START
+# ============================================================
+
+@bot.message_handler(commands=['start'])
+def iniciar(msg):
+    if msg.from_user.id != ADMIN_ID:
+        return
+
+    bot.send_message(
+        GRUPO_ID,
+        painel_texto(),
+        reply_markup=criar_teclado_roleta()
     )
-    bot.answer_callback_query(call.id)
 
-print("🤖 Criptoplay rodando 24h")
+# ============================================================
+# CLIQUE NOS NÚMEROS
+# ============================================================
+
+@bot.callback_query_handler(func=lambda call: True)
+def receber_numero(call):
+    if call.from_user.id != ADMIN_ID:
+        return
+
+    numero = int(call.data)
+
+    bot.answer_callback_query(
+        call.id,
+        text=f"Número selecionado: {numero}"
+    )
+
+# ============================================================
+# INICIALIZAÇÃO
+# ============================================================
+
+print("🎰 PAINEL ROLETA EUROPEIA PROFISSIONAL ATIVO")
 bot.infinity_polling()
