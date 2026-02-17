@@ -10,7 +10,7 @@ TOKEN = os.getenv("8518534286:AAEO3EnnHTLYjX64ExClGqIqHqR0DEpU1So")
 bot = telebot.TeleBot(TOKEN)
 
 GRUPO_ID = -1003629208122
-ADMIN_ID = 8431121309
+ADMIN_ID = 8502821738
 
 # ============================================================
 # DEFINIÇÃO DE CORES OFICIAIS EUROPEIAS
